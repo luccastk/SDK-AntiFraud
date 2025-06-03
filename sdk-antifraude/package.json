@@ -18,6 +18,11 @@
   },
   "homepage": "https://github.com/luccastk/SDK-AntiFraud#readme",
   "devDependencies": {
+    "@types/express": "^5.0.2",
     "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "axios": "^1.9.0",
+    "express": "^5.1.0"
   }
 }
