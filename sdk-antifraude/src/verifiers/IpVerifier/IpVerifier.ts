@@ -1,9 +1,5 @@
 import axios, { AxiosInstance } from "axios";
-import { NextFunction, Request, Response } from "express";
-
-type InitConfig = {
-  baseUrl: string;
-};
+import { NextFunction, Request } from "express";
 
 type RequestIpVerify = {
   ip: string;
@@ -12,6 +8,12 @@ type RequestIpVerify = {
 type ResponseIpVerify = {
   status: "aprove" | "review" | "decline";
 };
+
+interface CustomRequest extends Request {
+  ipVerificationResult?: ResponseIpVerify;
+}
+
+const baseUrl = "http://localhost:8080";
 
 export default class IpVerifier {
   private client: AxiosInstance;
@@ -26,25 +28,28 @@ export default class IpVerifier {
     });
   }
 
-  public static init(config: InitConfig): IpVerifier {
-    return new IpVerifier(config.baseUrl);
+  public static init(): IpVerifier {
+    return new IpVerifier(baseUrl);
   }
 
   public async verify(payload: RequestIpVerify): Promise<ResponseIpVerify> {
     const response = await this.client.post<ResponseIpVerify>(
-      "/verify",
+      "/verify-ip",
       payload
     );
     return response.data;
   }
 
   public middlewareIpVerify() {
-    return async (req: Request, res: Response, next: NextFunction) => {
+    return async (req: RequestIpVerify, next: NextFunction) => {
       try {
         const payload: RequestIpVerify = {
-          ip: req.ip || "0.0.0.0",
+          ip: req.ip,
         };
         const result = await this.verify(payload);
+
+        (req as CustomRequest).ipVerificationResult = result;
+
         next();
       } catch (error) {
         console.error("Erro no antifraud middleware:", error);
