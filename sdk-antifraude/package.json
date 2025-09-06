@@ -1,19 +1,22 @@
 {
   "name": "sdk-antifraud",
   "version": "1.0.0",
-  "description": "Project SDK",
+  "description": "SDK AntiFraud - Coleta fingerprints do frontend, analisa no backend e retorna decisões de risco",
   "main": "dist/index.js",
   "type": "module",
   "types": "dist/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc"
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "prepublish": "npm run clean && npm run build"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/luccastk/SDK-AntiFraud.git"
   },
-  "keywords": [],
+  "keywords": ["antifraud", "security", "fingerprint", "fraud-detection", "sdk", "typescript", "nodejs"],
   "author": "",
   "license": "ISC",
   "bugs": {

@@ -41,10 +41,10 @@ export default class IpVerifier {
   }
 
   public middlewareIpVerify() {
-    return async (req: RequestIpVerify, next: NextFunction) => {
+    return async (req: Request, res: any, next: NextFunction) => {
       try {
         const payload: RequestIpVerify = {
-          ip: req.ip,
+          ip: req.ip || req.connection.remoteAddress || '',
         };
         const result = await this.verify(payload);
 
