@@ -1,0 +1,29 @@
+name: kotlin-api
+services:
+  - name: kotlin-api
+    image: koyeb/app:latest
+    type: web
+    envs:
+      - key: SPRING_PROFILES_ACTIVE
+        value: production
+      - key: SERVER_PORT
+        value: "8080"
+    ports:
+      - port: 8080
+        http_path: /
+    regions:
+      - fra
+      - sin
+      - iad
+      - sfo
+    instances:
+      type: nano
+      min_instances: 1
+      max_instances: 3
+    health_checks:
+      http_path: /actuator/health
+      initial_delay: 30
+      period: 10
+      timeout: 5
+      success_threshold: 1
+      failure_threshold: 3
