@@ -1,6 +1,9 @@
 import axios, { AxiosInstance } from "axios";
 import { NextFunction, Request } from "express";
-import { FingerprintCollector, CompleteFingerprint } from "../../collectors/FingerprintCollector.js";
+import {
+  FingerprintCollector,
+  CompleteFingerprint,
+} from "../../collectors/FingerprintCollector.js";
 
 type VerificationRequest = {
   fingerprint: CompleteFingerprint;
@@ -20,7 +23,8 @@ interface CustomRequest extends Request {
   verificationResult?: VerificationResponse;
 }
 
-const baseUrl = "http://localhost:8080";
+// URL da API pode ser configurada via variável de ambiente
+const baseUrl = "https://sdk-antifraud.koyeb.app";
 
 export default class AdvancedVerifier {
   private client: AxiosInstance;
@@ -37,11 +41,14 @@ export default class AdvancedVerifier {
     this.fingerprintCollector = new FingerprintCollector();
   }
 
-  public static init(): AdvancedVerifier {
-    return new AdvancedVerifier(baseUrl);
+  public static init(apiUrl?: string): AdvancedVerifier {
+    const url = apiUrl || baseUrl;
+    return new AdvancedVerifier(url);
   }
 
-  public async verifyFingerprint(payload: VerificationRequest): Promise<VerificationResponse> {
+  public async verifyFingerprint(
+    payload: VerificationRequest
+  ): Promise<VerificationResponse> {
     try {
       const response = await this.client.post<VerificationResponse>(
         "/verify-fingerprint",
@@ -54,7 +61,9 @@ export default class AdvancedVerifier {
     }
   }
 
-  public async verifyIp(payload: { ip: string }): Promise<VerificationResponse> {
+  public async verifyIp(payload: {
+    ip: string;
+  }): Promise<VerificationResponse> {
     try {
       const response = await this.client.post<VerificationResponse>(
         "/verify-ip",
@@ -71,15 +80,16 @@ export default class AdvancedVerifier {
     return async (req: Request, res: any, next: NextFunction) => {
       try {
         // Coleta o fingerprint completo
-        const fingerprint = this.fingerprintCollector.collectCompleteFingerprint(userId);
-        
+        const fingerprint =
+          this.fingerprintCollector.collectCompleteFingerprint(userId);
+
         // Adiciona o IP da requisição
-        fingerprint.network.ip = req.ip || req.connection.remoteAddress || '';
+        fingerprint.network.ip = req.ip || req.connection.remoteAddress || "";
 
         const payload: VerificationRequest = {
           fingerprint,
           endpoint,
-          userId
+          userId,
         };
 
         const result = await this.verifyFingerprint(payload);
@@ -94,7 +104,7 @@ export default class AdvancedVerifier {
           riskScore: 100,
           reasons: ["Erro na verificação"],
           sessionId: "",
-          timestamp: Date.now()
+          timestamp: Date.now(),
         };
         next();
       }
@@ -104,7 +114,7 @@ export default class AdvancedVerifier {
   public middlewareIpOnly() {
     return async (req: Request, res: any, next: NextFunction) => {
       try {
-        const payload = { ip: req.ip || req.connection.remoteAddress || '' };
+        const payload = { ip: req.ip || req.connection.remoteAddress || "" };
         const result = await this.verifyIp(payload);
         (req as CustomRequest).verificationResult = result;
         next();
@@ -115,7 +125,7 @@ export default class AdvancedVerifier {
           riskScore: 100,
           reasons: ["Erro na verificação de IP"],
           sessionId: "",
-          timestamp: Date.now()
+          timestamp: Date.now(),
         };
         next();
       }

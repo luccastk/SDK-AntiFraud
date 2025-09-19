@@ -131,3 +131,6 @@ logs
 # Temporary files
 tmp/
 temp/
+
+# NPM configuration (contains sensitive tokens)
+.npmrc

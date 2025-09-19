@@ -13,7 +13,9 @@ interface CustomRequest extends Request {
   ipVerificationResult?: ResponseIpVerify;
 }
 
-const baseUrl = "http://localhost:8080";
+// URL da API pode ser configurada via variável de ambiente
+const baseUrl =
+  process.env.ANTIFRAUD_API_URL || "https://sdk-antifraud.koyeb.app";
 
 export default class IpVerifier {
   private client: AxiosInstance;
@@ -28,8 +30,9 @@ export default class IpVerifier {
     });
   }
 
-  public static init(): IpVerifier {
-    return new IpVerifier(baseUrl);
+  public static init(apiUrl?: string): IpVerifier {
+    const url = apiUrl || baseUrl;
+    return new IpVerifier(url);
   }
 
   public async verify(payload: RequestIpVerify): Promise<ResponseIpVerify> {
@@ -44,7 +47,7 @@ export default class IpVerifier {
     return async (req: Request, res: any, next: NextFunction) => {
       try {
         const payload: RequestIpVerify = {
-          ip: req.ip || req.connection.remoteAddress || '',
+          ip: req.ip || req.connection.remoteAddress || "",
         };
         const result = await this.verify(payload);
 

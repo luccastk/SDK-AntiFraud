@@ -1,35 +1,67 @@
 {
-  "name": "sdk-antifraud",
+  "name": "sdk-antifraud-core",
   "version": "1.0.0",
-  "description": "SDK AntiFraud - Coleta fingerprints do frontend, analisa no backend e retorna decisões de risco",
+  "description": "🛡️ SDK AntiFraud - Advanced fraud detection SDK with device fingerprinting and risk analysis",
   "main": "dist/index.js",
   "type": "module",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
     "dev": "tsc --watch",
-    "clean": "rm -rf dist",
-    "prepublish": "npm run clean && npm run build"
+    "clean": "rimraf dist",
+    "prepublishOnly": "npm run clean && npm run build",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "echo \"Linting not configured\"",
+    "prepare": "npm run build"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/luccastk/SDK-AntiFraud.git"
+    "url": "git+https://github.com/luccastk/SDK-AntiFraud.git",
+    "directory": "sdk-antifraude"
   },
-  "keywords": ["antifraud", "security", "fingerprint", "fraud-detection", "sdk", "typescript", "nodejs"],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "antifraud",
+    "security",
+    "fingerprint",
+    "fraud-detection",
+    "sdk",
+    "typescript",
+    "nodejs",
+    "device-fingerprinting",
+    "risk-analysis",
+    "behavior-analysis",
+    "cybersecurity"
+  ],
+  "author": {
+    "name": "Lucca",
+    "email": "lucca@example.com",
+    "url": "https://github.com/luccastk"
+  },
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/luccastk/SDK-AntiFraud/issues"
   },
   "homepage": "https://github.com/luccastk/SDK-AntiFraud#readme",
+  "engines": {
+    "node": ">=16.0.0"
+  },
   "devDependencies": {
     "@types/express": "^5.0.2",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "rimraf": "^5.0.5"
   },
   "dependencies": {
     "axios": "^1.9.0",
     "express": "^5.1.0",
     "undici-types": "^7.10.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }
