@@ -6,7 +6,11 @@ type RequestIpVerify = {
 };
 
 type ResponseIpVerify = {
-  status: "aprove" | "review" | "decline";
+  status: "ALLOW" | "REVIEW" | "DENY";
+  riskScore: number;
+  reasons: string[];
+  sessionId: string;
+  timestamp: number;
 };
 
 interface CustomRequest extends Request {

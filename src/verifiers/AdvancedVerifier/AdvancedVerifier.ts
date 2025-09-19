@@ -12,7 +12,7 @@ type VerificationRequest = {
 };
 
 type VerificationResponse = {
-  status: "approve" | "review" | "decline";
+  status: "ALLOW" | "REVIEW" | "DENY";
   riskScore: number;
   reasons: string[];
   sessionId: string;
@@ -56,7 +56,7 @@ export default class AdvancedVerifier {
       );
       return response.data;
     } catch (error) {
-      console.error("Erro na verificação de fingerprint:", error);
+      console.warn("Erro na verificação de fingerprint:", error);
       throw error;
     }
   }
@@ -71,7 +71,7 @@ export default class AdvancedVerifier {
       );
       return response.data;
     } catch (error) {
-      console.error("Erro na verificação de IP:", error);
+      console.warn("Erro na verificação de IP:", error);
       throw error;
     }
   }
@@ -97,10 +97,10 @@ export default class AdvancedVerifier {
 
         next();
       } catch (error) {
-        console.error("Erro no middleware de verificação avançada:", error);
+        console.warn("Erro no middleware de verificação avançada:", error);
         // Em caso de erro, permite a requisição mas adiciona flag de erro
         (req as CustomRequest).verificationResult = {
-          status: "review",
+          status: "REVIEW",
           riskScore: 100,
           reasons: ["Erro na verificação"],
           sessionId: "",
@@ -121,7 +121,7 @@ export default class AdvancedVerifier {
       } catch (error) {
         console.error("Erro no middleware de verificação de IP:", error);
         (req as CustomRequest).verificationResult = {
-          status: "review",
+          status: "REVIEW",
           riskScore: 100,
           reasons: ["Erro na verificação de IP"],
           sessionId: "",
