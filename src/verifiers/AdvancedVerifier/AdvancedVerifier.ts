@@ -4,6 +4,7 @@ import {
   FingerprintCollector,
   CompleteFingerprint,
 } from "../../collectors/FingerprintCollector.js";
+import { Config } from "../../config/Config.js";
 
 type VerificationRequest = {
   fingerprint: CompleteFingerprint;
@@ -23,8 +24,8 @@ interface CustomRequest extends Request {
   verificationResult?: VerificationResponse;
 }
 
-// URL da API pode ser configurada via variável de ambiente
-const baseUrl = "https://sdk-antifraud.koyeb.app";
+// URL da API usando a classe Config
+const baseUrl = Config.API_URL;
 
 export default class AdvancedVerifier {
   private readonly client: AxiosInstance;
@@ -35,8 +36,9 @@ export default class AdvancedVerifier {
       baseURL: baseUrl,
       headers: {
         "Content-Type": "application/json",
+        "User-Agent": "SDK-AntiFraud-Core/1.0.4",
       },
-      timeout: 10000,
+      timeout: Config.TIMEOUT,
     });
     this.fingerprintCollector = new FingerprintCollector();
   }
@@ -55,9 +57,21 @@ export default class AdvancedVerifier {
         payload
       );
       return response.data;
-    } catch (error) {
-      console.warn("Erro na verificação de fingerprint:", error);
-      throw error;
+    } catch (error: any) {
+      console.warn("Erro na verificação de fingerprint:", {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+
+      // Return a safe fallback response instead of throwing
+      return {
+        status: "REVIEW",
+        riskScore: 100,
+        reasons: ["Erro na comunicação com a API"],
+        sessionId: payload.fingerprint.sessionId || "",
+        timestamp: Date.now(),
+      };
     }
   }
 
@@ -70,9 +84,21 @@ export default class AdvancedVerifier {
         payload
       );
       return response.data;
-    } catch (error) {
-      console.warn("Erro na verificação de IP:", error);
-      throw error;
+    } catch (error: any) {
+      console.warn("Erro na verificação de IP:", {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+
+      // Return a safe fallback response instead of throwing
+      return {
+        status: "REVIEW",
+        riskScore: 100,
+        reasons: ["Erro na comunicação com a API"],
+        sessionId: "",
+        timestamp: Date.now(),
+      };
     }
   }
 
@@ -97,8 +123,12 @@ export default class AdvancedVerifier {
 
         // Sempre continua - usuário decide no controller
         next();
-      } catch (error) {
-        console.warn("Erro no middleware de verificação avançada:", error);
+      } catch (error: any) {
+        console.warn("Erro no middleware de verificação avançada:", {
+          message: error.message,
+          endpoint,
+          userId,
+        });
         // Em caso de erro, adiciona flag de erro mas continua
         (req as CustomRequest).verificationResult = {
           status: "REVIEW",
@@ -119,11 +149,14 @@ export default class AdvancedVerifier {
         const payload = { ip: req.ip || req.socket.remoteAddress || "" };
         const result = await this.verifyIp(payload);
         (req as CustomRequest).verificationResult = result;
-        
+
         // Sempre continua - usuário decide no controller
         next();
-      } catch (error) {
-        console.error("Erro no middleware de verificação de IP:", error);
+      } catch (error: any) {
+        console.warn("Erro no middleware de verificação de IP:", {
+          message: error.message,
+          ip: req.ip || req.socket.remoteAddress || "",
+        });
         (req as CustomRequest).verificationResult = {
           status: "REVIEW",
           riskScore: 100,
@@ -145,5 +178,35 @@ export default class AdvancedVerifier {
   // Método para coletar fingerprint manualmente
   public collectFingerprint(userId?: string): CompleteFingerprint {
     return this.fingerprintCollector.collectCompleteFingerprint(userId);
+  }
+
+  // Método para testar conectividade com a API
+  public async testApiConnection(): Promise<{
+    status: string;
+    message: string;
+  }> {
+    try {
+      await this.client.get("/");
+      return {
+        status: "success",
+        message: "API está online e acessível",
+      };
+    } catch (error: any) {
+      return {
+        status: "error",
+        message: `Erro ao conectar com a API: ${error.message}`,
+      };
+    }
+  }
+
+  // Método para obter informações da API
+  public async getApiInfo(): Promise<any> {
+    try {
+      const response = await this.client.get("/");
+      return response.data;
+    } catch (error: any) {
+      console.warn("Erro ao obter informações da API:", error.message);
+      return null;
+    }
   }
 }

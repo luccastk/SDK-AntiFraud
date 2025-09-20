@@ -21,7 +21,11 @@ npm install sdk-antifraud-core@latest
 ### Importação
 
 ```typescript
-import { AdvancedVerifier, FingerprintCollector } from "sdk-antifraud-core";
+import {
+  AdvancedVerifier,
+  FingerprintCollector,
+  Config,
+} from "sdk-antifraud-core";
 ```
 
 ### Verificação Simples de IP
@@ -110,11 +114,35 @@ import { Config } from "sdk-antifraud-core";
 
 // Usar URLs pré-configuradas
 const devUrl = Config.getApiUrl("DEVELOPMENT"); // http://localhost:8080
+const stagingUrl = Config.getApiUrl("STAGING"); // https://sdk-antifraud-staging.koyeb.app
 const prodUrl = Config.getApiUrl("PRODUCTION"); // https://sdk-antifraud.koyeb.app
 
 // Configurações disponíveis
 console.log(Config.API_URL);
 console.log(Config.TIMEOUT);
+
+// Verificar ambiente atual
+console.log(Config.isDevelopment()); // true/false
+console.log(Config.isProduction()); // true/false
+
+// Obter todas as configurações
+const config = Config.getConfig();
+console.log(config);
+```
+
+### Variáveis de Ambiente
+
+O SDK suporta as seguintes variáveis de ambiente:
+
+```bash
+# URL da API (sobrescreve configuração padrão)
+ANTIFRAUD_API_URL=https://sua-api.com
+
+# Timeout para requisições em ms (padrão: 10000)
+ANTIFRAUD_TIMEOUT=15000
+
+# Ambiente de execução
+NODE_ENV=production
 ```
 
 ## 🎯 Filosofia do SDK
@@ -157,7 +185,7 @@ interface VerificationResponse {
 ### Status de Verificação
 
 - **`ALLOW`**: Aprovado - baixo risco
-- **`REVIEW`**: Em análise - risco médio  
+- **`REVIEW`**: Em análise - risco médio
 - **`DENY`**: Negado - alto risco
 
 ## 🔧 Exemplos Avançados
@@ -166,70 +194,82 @@ interface VerificationResponse {
 
 ```typescript
 // Checkout com regras rígidas de segurança
-app.post("/checkout", verifier.middlewareAdvancedVerify("/checkout"), (req, res) => {
-  const { status, riskScore, reasons } = req.verificationResult!;
+app.post(
+  "/checkout",
+  verifier.middlewareAdvancedVerify("/checkout"),
+  (req, res) => {
+    const { status, riskScore, reasons } = req.verificationResult!;
 
-  // Regras rígidas para e-commerce
-  if (status === "DENY") {
-    return res.status(403).json({ error: "Transação bloqueada", reasons });
+    // Regras rígidas para e-commerce
+    if (status === "DENY") {
+      return res.status(403).json({ error: "Transação bloqueada", reasons });
+    }
+
+    if (riskScore > 70) {
+      return res.status(202).json({
+        message: "Verificação adicional necessária",
+        requiresAuth: true,
+      });
+    }
+
+    // Processar pagamento
+    res.json({ success: true, orderId: generateOrderId() });
   }
-
-  if (riskScore > 70) {
-    return res.status(202).json({ 
-      message: "Verificação adicional necessária",
-      requiresAuth: true 
-    });
-  }
-
-  // Processar pagamento
-  res.json({ success: true, orderId: generateOrderId() });
-});
+);
 ```
 
 ### 🏦 Banking - Regras Flexíveis
 
 ```typescript
 // Banking com regras mais flexíveis
-app.post("/transfer", verifier.middlewareAdvancedVerify("/transfer"), (req, res) => {
-  const { status, riskScore, reasons } = req.verificationResult!;
+app.post(
+  "/transfer",
+  verifier.middlewareAdvancedVerify("/transfer"),
+  (req, res) => {
+    const { status, riskScore, reasons } = req.verificationResult!;
 
-  // Banking: Sempre permitir, mas com controles
-  if (status === "DENY") {
-    // Log para auditoria, mas permite
-    auditLog("Alto risco detectado", { riskScore, reasons });
+    // Banking: Sempre permitir, mas com controles
+    if (status === "DENY") {
+      // Log para auditoria, mas permite
+      auditLog("Alto risco detectado", { riskScore, reasons });
+    }
+
+    if (riskScore > 80) {
+      // Requer aprovação manual
+      return res.json({
+        status: "pending_approval",
+        message: "Transferência em análise",
+      });
+    }
+
+    // Processar transferência
+    res.json({ success: true });
   }
-
-  if (riskScore > 80) {
-    // Requer aprovação manual
-    return res.json({ 
-      status: "pending_approval",
-      message: "Transferência em análise" 
-    });
-  }
-
-  // Processar transferência
-  res.json({ success: true });
-});
+);
 ```
 
 ### 🎮 Gaming - Regras Personalizadas
 
 ```typescript
 // Gaming com regras específicas
-app.post("/purchase-credits", verifier.middlewareAdvancedVerify("/credits"), (req, res) => {
-  const { status, riskScore } = req.verificationResult!;
+app.post(
+  "/purchase-credits",
+  verifier.middlewareAdvancedVerify("/credits"),
+  (req, res) => {
+    const { status, riskScore } = req.verificationResult!;
 
-  // Gaming: Apenas alertar, não bloquear
-  if (riskScore > 60) {
-    return res.json({ 
-      warning: "Conta suspeita detectada",
-      requiresPhoneVerification: true 
-    });
+    // Gaming: Apenas alertar, não bloquear
+    if (riskScore > 60) {
+      return res.json({
+        warning: "Conta suspeita detectada",
+        requiresPhoneVerification: true,
+      });
+    }
+
+    // Processar compra
+    res.json({ success: true, credits: req.body.amount });
   }
-
-  // Processar compra
-  res.json({ success: true, credits: req.body.amount });
-});
+);
 ```
 
 ### 🔐 Login - Verificação de IP
@@ -241,21 +281,20 @@ app.post("/login", verifier.middlewareIpOnly(), (req, res) => {
 
   // IP suspeito - solicitar 2FA
   if (riskScore > 70) {
-    return res.json({ 
+    return res.json({
       requires2FA: true,
-      message: "Verificação adicional necessária" 
+      message: "Verificação adicional necessária",
     });
   }
 
   // IP confiável - login normal
-  res.json({ 
-    success: true, 
+  res.json({
+    success: true,
     token: generateToken(),
-    riskLevel: riskScore < 30 ? "low" : "medium"
+    riskLevel: riskScore < 30 ? "low" : "medium",
   });
 });
 ```
-
 
 ### React/Next.js Integration
 
@@ -307,23 +346,59 @@ O SDK se conecta com estes endpoints:
 - **Rate Limiting**: Implemente rate limiting no servidor
 - **Logs**: Monitore tentativas suspeitas
 - **Dados**: Fingerprints não são armazenados permanentemente
+- **Fallback Seguro**: Em caso de erro na API, o SDK retorna status "REVIEW" para análise manual
+- **Headers**: SDK inclui User-Agent identificador para auditoria
 
 ## 🐛 Troubleshooting
+
+### Teste de Conectividade
+
+```typescript
+import { AdvancedVerifier } from "sdk-antifraud-core";
+
+const verifier = AdvancedVerifier.init();
+
+// Testar conexão com a API
+const connectionTest = await verifier.testApiConnection();
+console.log(connectionTest.status); // "success" ou "error"
+console.log(connectionTest.message);
+
+// Obter informações da API
+const apiInfo = await verifier.getApiInfo();
+console.log(apiInfo);
+/* Exemplo de resposta:
+{
+  "service": "SDK Anti-Fraud API",
+  "version": "1.0.0",
+  "status": "UP",
+  "endpoints": [
+    "/verify-ip - Verificação de IP",
+    "/verify-fingerprint - Verificação avançada de fingerprint"
+  ]
+}
+*/
+```
 
 ### Erro de Conexão
 
 ```typescript
-// Verificar se a API está online
-const response = await fetch("https://sdk-antifraud.koyeb.app/");
-console.log(await response.json());
+// O SDK agora retorna respostas seguras em caso de erro
+// Em vez de lançar exceções, retorna status "REVIEW" com riskScore 100
+const result = await verifier.verifyIp({ ip: "192.168.1.1" });
+if (result.reasons.includes("Erro na comunicação com a API")) {
+  console.log("API indisponível, usando fallback seguro");
+}
 ```
 
 ### Timeout
 
 ```typescript
-// Aumentar timeout
-const verifier = AdvancedVerifier.init();
-// O timeout padrão é 10 segundos
+// Configurar timeout via variável de ambiente
+// ANTIFRAUD_TIMEOUT=15000
+
+// Ou usar Config
+import { Config } from "sdk-antifraud-core";
+console.log("Timeout atual:", Config.TIMEOUT);
 ```
 
 ### Browser Compatibility
