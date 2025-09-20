@@ -95,10 +95,11 @@ export default class AdvancedVerifier {
         const result = await this.verifyFingerprint(payload);
         (req as CustomRequest).verificationResult = result;
 
+        // Sempre continua - usuário decide no controller
         next();
       } catch (error) {
         console.warn("Erro no middleware de verificação avançada:", error);
-        // Em caso de erro, permite a requisição mas adiciona flag de erro
+        // Em caso de erro, adiciona flag de erro mas continua
         (req as CustomRequest).verificationResult = {
           status: "REVIEW",
           riskScore: 100,
@@ -106,6 +107,7 @@ export default class AdvancedVerifier {
           sessionId: "",
           timestamp: Date.now(),
         };
+        // Sempre continua - usuário decide no controller
         next();
       }
     };
@@ -117,6 +119,8 @@ export default class AdvancedVerifier {
         const payload = { ip: req.ip || req.socket.remoteAddress || "" };
         const result = await this.verifyIp(payload);
         (req as CustomRequest).verificationResult = result;
+        
+        // Sempre continua - usuário decide no controller
         next();
       } catch (error) {
         console.error("Erro no middleware de verificação de IP:", error);
@@ -127,6 +131,7 @@ export default class AdvancedVerifier {
           sessionId: "",
           timestamp: Date.now(),
         };
+        // Sempre continua - usuário decide no controller
         next();
       }
     };

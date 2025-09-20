@@ -1,18 +1,16 @@
-import IpVerifier from "./verifiers/IpVerifier/IpVerifier.js";
-import AdvancedVerifier from "./verifiers/AdvancedVerifier/AdvancedVerifier.js";
 import { FingerprintCollector } from "./collectors/FingerprintCollector.js";
-import { Config } from "./config/Config.js";
+import AdvancedVerifier from "./verifiers/AdvancedVerifier/AdvancedVerifier.js";
 
-// Export default (mantém compatibilidade)
-export default IpVerifier;
+// Export default
+export default AdvancedVerifier;
 
-// Export named exports para funcionalidades avançadas
-export { AdvancedVerifier, FingerprintCollector, IpVerifier, Config };
+// Export named exports
+export { AdvancedVerifier, FingerprintCollector };
 
 // Export types
 export type {
-  DeviceFingerprint,
   BehaviorFingerprint,
-  NetworkFingerprint,
   CompleteFingerprint,
+  DeviceFingerprint,
+  NetworkFingerprint,
 } from "./collectors/FingerprintCollector.js";
