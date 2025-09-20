@@ -27,8 +27,8 @@ interface CustomRequest extends Request {
 const baseUrl = "https://sdk-antifraud.koyeb.app";
 
 export default class AdvancedVerifier {
-  private client: AxiosInstance;
-  private fingerprintCollector: FingerprintCollector;
+  private readonly client: AxiosInstance;
+  private readonly fingerprintCollector: FingerprintCollector;
 
   private constructor(baseUrl: string) {
     this.client = axios.create({
@@ -84,7 +84,7 @@ export default class AdvancedVerifier {
           this.fingerprintCollector.collectCompleteFingerprint(userId);
 
         // Adiciona o IP da requisição
-        fingerprint.network.ip = req.ip || req.connection.remoteAddress || "";
+        fingerprint.network.ip = req.ip || req.socket.remoteAddress || "";
 
         const payload: VerificationRequest = {
           fingerprint,
@@ -114,7 +114,7 @@ export default class AdvancedVerifier {
   public middlewareIpOnly() {
     return async (req: Request, res: any, next: NextFunction) => {
       try {
-        const payload = { ip: req.ip || req.connection.remoteAddress || "" };
+        const payload = { ip: req.ip || req.socket.remoteAddress || "" };
         const result = await this.verifyIp(payload);
         (req as CustomRequest).verificationResult = result;
         next();

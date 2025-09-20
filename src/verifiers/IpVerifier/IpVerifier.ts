@@ -22,7 +22,7 @@ const baseUrl =
   process.env.ANTIFRAUD_API_URL || "https://sdk-antifraud.koyeb.app";
 
 export default class IpVerifier {
-  private client: AxiosInstance;
+  private readonly client: AxiosInstance;
 
   private constructor(baseUrl: string) {
     this.client = axios.create({
@@ -51,7 +51,7 @@ export default class IpVerifier {
     return async (req: Request, res: any, next: NextFunction) => {
       try {
         const payload: RequestIpVerify = {
-          ip: req.ip || req.connection.remoteAddress || "",
+          ip: req.ip || req.socket.remoteAddress || "",
         };
         const result = await this.verify(payload);
 

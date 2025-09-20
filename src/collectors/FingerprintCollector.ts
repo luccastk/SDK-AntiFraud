@@ -45,9 +45,9 @@ export interface CompleteFingerprint {
 }
 
 export class FingerprintCollector {
-  private sessionId: string;
-  private startTime: number;
-  private behaviorData: Partial<BehaviorFingerprint> = {
+  private readonly sessionId: string;
+  private readonly startTime: number;
+  private readonly behaviorData: Partial<BehaviorFingerprint> = {
     mouseMovements: 0,
     keystrokes: 0,
     scrollEvents: 0,
@@ -55,8 +55,8 @@ export class FingerprintCollector {
     focusEvents: 0,
     pageLoadTime: 0,
     sessionDuration: 0,
-    referrer: '',
-    timestamp: Date.now()
+    referrer: "",
+    timestamp: Date.now(),
   };
 
   constructor() {
@@ -66,42 +66,47 @@ export class FingerprintCollector {
   }
 
   private generateSessionId(): string {
-    return 'session_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+    return (
+      "session_" +
+      Math.random().toString(36).substring(2, 11) +
+      "_" +
+      Date.now()
+    );
   }
 
   private initializeBehaviorTracking(): void {
     // Verificar se estamos no browser
-    if (typeof document === 'undefined' || typeof window === 'undefined') {
+    if (typeof document === "undefined" || typeof window === "undefined") {
       return; // Não executar no servidor Node.js
     }
 
     // Mouse movements
-    document.addEventListener('mousemove', () => {
+    document.addEventListener("mousemove", () => {
       this.behaviorData.mouseMovements!++;
     });
 
     // Keystrokes
-    document.addEventListener('keydown', () => {
+    document.addEventListener("keydown", () => {
       this.behaviorData.keystrokes!++;
     });
 
     // Scroll events
-    document.addEventListener('scroll', () => {
+    document.addEventListener("scroll", () => {
       this.behaviorData.scrollEvents!++;
     });
 
     // Click events
-    document.addEventListener('click', () => {
+    document.addEventListener("click", () => {
       this.behaviorData.clickEvents!++;
     });
 
     // Focus events
-    document.addEventListener('focus', () => {
+    document.addEventListener("focus", () => {
       this.behaviorData.focusEvents!++;
     });
 
     // Page load time
-    window.addEventListener('load', () => {
+    window.addEventListener("load", () => {
       this.behaviorData.pageLoadTime = performance.now();
     });
 
@@ -111,14 +116,14 @@ export class FingerprintCollector {
 
   public collectDeviceFingerprint(): DeviceFingerprint {
     // Verificar se estamos no browser
-    if (typeof navigator === 'undefined' || typeof window === 'undefined') {
+    if (typeof navigator === "undefined" || typeof window === "undefined") {
       // Retornar dados padrão para servidor
       return {
-        userAgent: 'Node.js Server',
-        language: 'en-US',
-        platform: 'Node.js',
-        screenResolution: '0x0',
-        timezone: 'UTC',
+        userAgent: "Node.js Server",
+        language: "en-US",
+        platform: "Node.js",
+        screenResolution: "0x0",
+        timezone: "UTC",
         colorDepth: 0,
         pixelRatio: 1,
         hardwareConcurrency: 0,
@@ -127,8 +132,8 @@ export class FingerprintCollector {
         doNotTrack: null,
         plugins: [],
         fonts: [],
-        canvas: '',
-        webgl: ''
+        canvas: "",
+        webgl: "",
       };
     }
 
@@ -139,7 +144,7 @@ export class FingerprintCollector {
     return {
       userAgent: navigator.userAgent,
       language: navigator.language,
-      platform: navigator.platform,
+      platform: (navigator as any).userAgentData?.platform || "Unknown",
       screenResolution: `${screen.width}x${screen.height}`,
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       colorDepth: screen.colorDepth,
@@ -148,31 +153,32 @@ export class FingerprintCollector {
       maxTouchPoints: navigator.maxTouchPoints || 0,
       cookieEnabled: navigator.cookieEnabled,
       doNotTrack: navigator.doNotTrack,
-      plugins: Array.from(navigator.plugins).map(plugin => plugin.name),
+      plugins: [],
       fonts,
       canvas,
-      webgl
+      webgl,
     };
   }
 
   public collectBehaviorFingerprint(): BehaviorFingerprint {
     this.behaviorData.sessionDuration = Date.now() - this.startTime;
     this.behaviorData.timestamp = Date.now();
-    
+
     return this.behaviorData as BehaviorFingerprint;
   }
 
   public collectNetworkFingerprint(): NetworkFingerprint {
-    const connection = (navigator as any).connection || 
-                      (navigator as any).mozConnection || 
-                      (navigator as any).webkitConnection;
+    const connection =
+      (navigator as any).connection ||
+      (navigator as any).mozConnection ||
+      (navigator as any).webkitConnection;
 
     return {
-      ip: '', // Will be filled by the server
+      ip: "", // Will be filled by the server
       connectionType: connection?.type,
       effectiveType: connection?.effectiveType,
       downlink: connection?.downlink,
-      rtt: connection?.rtt
+      rtt: connection?.rtt,
     };
   }
 
@@ -182,63 +188,64 @@ export class FingerprintCollector {
       behavior: this.collectBehaviorFingerprint(),
       network: this.collectNetworkFingerprint(),
       sessionId: this.sessionId,
-      userId
+      userId,
     };
   }
 
   private getCanvasFingerprint(): string {
-    if (typeof document === 'undefined') return '';
+    if (typeof document === "undefined") return "";
 
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    
-    if (!ctx) return '';
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    if (!ctx) return "";
 
     // Draw some text and shapes
-    ctx.textBaseline = 'top';
-    ctx.font = '14px Arial';
-    ctx.fillStyle = '#f60';
+    ctx.textBaseline = "top";
+    ctx.font = "14px Arial";
+    ctx.fillStyle = "#f60";
     ctx.fillRect(125, 1, 62, 20);
-    ctx.fillStyle = '#069';
-    ctx.fillText('AntiFraud SDK', 2, 15);
-    ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
-    ctx.fillText('AntiFraud SDK', 4, 17);
+    ctx.fillStyle = "#069";
+    ctx.fillText("AntiFraud SDK", 2, 15);
+    ctx.fillStyle = "rgba(102, 204, 0, 0.7)";
+    ctx.fillText("AntiFraud SDK", 4, 17);
 
     return canvas.toDataURL();
   }
 
   private getWebGLFingerprint(): string {
-    if (typeof document === 'undefined') return '';
+    if (typeof document === "undefined") return "";
 
-    const canvas = document.createElement('canvas');
-    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-    
-    if (!gl) return '';
+    const canvas = document.createElement("canvas");
+    const gl =
+      canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+
+    if (!gl) return "";
 
     // Type assertion para WebGLRenderingContext
     const webglContext = gl as WebGLRenderingContext;
-    const debugInfo = webglContext.getExtension('WEBGL_debug_renderer_info');
-    if (!debugInfo) return '';
+    const debugInfo = webglContext.getExtension("WEBGL_debug_renderer_info");
+    if (!debugInfo) return "";
 
     return webglContext.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
   }
 
   private getFontFingerprint(): string[] {
-    if (typeof document === 'undefined') return [];
+    if (typeof document === "undefined") return [];
 
-    const testString = 'abcdefghijklmnopqrstuvwxyz0123456789';
-    const testSize = '72px';
-    const h = document.getElementsByTagName('body')[0];
-    const s = document.createElement('span');
-    
+    const testString = "abcdefghijklmnopqrstuvwxyz0123456789";
+    const testSize = "72px";
+    const h = document.getElementsByTagName("body")[0];
+    const s = document.createElement("span");
+
     s.style.fontSize = testSize;
     s.innerHTML = testString;
-    
+
     const defaultWidth: { [key: string]: number } = {};
     const defaultHeight: { [key: string]: number } = {};
-    
-    const defaultFonts = ['monospace', 'sans-serif', 'serif'];
-    
+
+    const defaultFonts = ["monospace", "sans-serif", "serif"];
+
     for (const font of defaultFonts) {
       s.style.fontFamily = font;
       h.appendChild(s);
@@ -249,21 +256,43 @@ export class FingerprintCollector {
 
     const detectedFonts: string[] = [];
     const fonts = [
-      'Arial', 'Arial Black', 'Arial Narrow', 'Arial Rounded MT Bold',
-      'Calibri', 'Cambria', 'Candara', 'Century Gothic', 'Comic Sans MS',
-      'Consolas', 'Courier', 'Courier New', 'Franklin Gothic Medium',
-      'Garamond', 'Georgia', 'Helvetica', 'Impact', 'Lucida Console',
-      'Lucida Sans Unicode', 'Microsoft Sans Serif', 'Palatino Linotype',
-      'Segoe UI', 'Tahoma', 'Times', 'Times New Roman', 'Trebuchet MS',
-      'Verdana'
+      "Arial",
+      "Arial Black",
+      "Arial Narrow",
+      "Arial Rounded MT Bold",
+      "Calibri",
+      "Cambria",
+      "Candara",
+      "Century Gothic",
+      "Comic Sans MS",
+      "Consolas",
+      "Courier",
+      "Courier New",
+      "Franklin Gothic Medium",
+      "Garamond",
+      "Georgia",
+      "Helvetica",
+      "Impact",
+      "Lucida Console",
+      "Lucida Sans Unicode",
+      "Microsoft Sans Serif",
+      "Palatino Linotype",
+      "Segoe UI",
+      "Tahoma",
+      "Times",
+      "Times New Roman",
+      "Trebuchet MS",
+      "Verdana",
     ];
 
     for (const font of fonts) {
       let detected = false;
       for (const baseFont of defaultFonts) {
-        s.style.fontFamily = font + ',' + baseFont;
+        s.style.fontFamily = font + "," + baseFont;
         h.appendChild(s);
-        const matched = (s.offsetWidth !== defaultWidth[baseFont] || s.offsetHeight !== defaultHeight[baseFont]);
+        const matched =
+          s.offsetWidth !== defaultWidth[baseFont] ||
+          s.offsetHeight !== defaultHeight[baseFont];
         h.removeChild(s);
         if (matched) {
           detected = true;
