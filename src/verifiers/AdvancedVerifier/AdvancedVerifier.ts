@@ -105,9 +105,9 @@ export default class AdvancedVerifier {
   public middlewareAdvancedVerify(endpoint: string, userId?: string) {
     return async (req: Request, res: any, next: NextFunction) => {
       try {
-        // Coleta o fingerprint completo
-        const fingerprint =
-          this.fingerprintCollector.collectCompleteFingerprint(userId);
+        // Criar novo collector para cada requisição para garantir dados únicos
+        const uniqueCollector = new FingerprintCollector();
+        const fingerprint = uniqueCollector.collectCompleteFingerprint(userId);
 
         // Adiciona o IP da requisição
         fingerprint.network.ip = req.ip || req.socket.remoteAddress || "";
