@@ -86,10 +86,10 @@ export class FingerprintCollector {
   private getOrCreateSessionId(): string {
     if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
       try {
-        let sessionId = localStorage.getItem('antifraud_session_id');
+        let sessionId = localStorage.getItem("antifraud_session_id");
         if (!sessionId) {
           sessionId = this.generateSessionId();
-          localStorage.setItem('antifraud_session_id', sessionId);
+          localStorage.setItem("antifraud_session_id", sessionId);
         }
         return sessionId;
       } catch {
@@ -120,12 +120,22 @@ export class FingerprintCollector {
         if (!localStorage.getItem("sessionStart")) {
           localStorage.setItem("sessionStart", Date.now().toString());
         }
-        
-        this.behaviorData.mouseMovements = parseInt(localStorage.getItem("mouseMovements") || "0");
-        this.behaviorData.keystrokes = parseInt(localStorage.getItem("keystrokes") || "0");
-        this.behaviorData.scrollEvents = parseInt(localStorage.getItem("scrollEvents") || "0");
-        this.behaviorData.clickEvents = parseInt(localStorage.getItem("clickEvents") || "0");
-        this.behaviorData.focusEvents = parseInt(localStorage.getItem("focusEvents") || "0");
+
+        this.behaviorData.mouseMovements = parseInt(
+          localStorage.getItem("mouseMovements") || "0"
+        );
+        this.behaviorData.keystrokes = parseInt(
+          localStorage.getItem("keystrokes") || "0"
+        );
+        this.behaviorData.scrollEvents = parseInt(
+          localStorage.getItem("scrollEvents") || "0"
+        );
+        this.behaviorData.clickEvents = parseInt(
+          localStorage.getItem("clickEvents") || "0"
+        );
+        this.behaviorData.focusEvents = parseInt(
+          localStorage.getItem("focusEvents") || "0"
+        );
       } catch (e) {
         // Fallback se localStorage não funcionar
       }
@@ -134,7 +144,10 @@ export class FingerprintCollector {
     // Mouse movements
     document.addEventListener("mousemove", () => {
       this.behaviorData.mouseMovements!++;
-      this.saveToLocalStorage("mouseMovements", this.behaviorData.mouseMovements!);
+      this.saveToLocalStorage(
+        "mouseMovements",
+        this.behaviorData.mouseMovements!
+      );
     });
 
     // Keystrokes
