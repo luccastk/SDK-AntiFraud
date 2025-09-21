@@ -59,10 +59,44 @@ export class FingerprintCollector {
     timestamp: Date.now(),
   };
 
+  // Singleton para browser
+  private static instance: FingerprintCollector | null = null;
+
   constructor() {
-    this.sessionId = this.generateSessionId();
+    this.sessionId = this.getOrCreateSessionId();
     this.startTime = Date.now();
     this.initializeBehaviorTracking();
+  }
+
+  // Método estático para obter instância singleton (apenas no browser)
+  public static getInstance(): FingerprintCollector {
+    if (typeof window !== "undefined") {
+      // No browser, usar singleton
+      if (!FingerprintCollector.instance) {
+        FingerprintCollector.instance = new FingerprintCollector();
+      }
+      return FingerprintCollector.instance;
+    } else {
+      // No servidor, sempre criar nova instância
+      return new FingerprintCollector();
+    }
+  }
+
+  // Gera ou recupera session ID do localStorage (browser) ou gera novo (servidor)
+  private getOrCreateSessionId(): string {
+    if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
+      try {
+        let sessionId = localStorage.getItem('antifraud_session_id');
+        if (!sessionId) {
+          sessionId = this.generateSessionId();
+          localStorage.setItem('antifraud_session_id', sessionId);
+        }
+        return sessionId;
+      } catch {
+        return this.generateSessionId();
+      }
+    }
+    return this.generateSessionId();
   }
 
   private generateSessionId(): string {
@@ -80,29 +114,51 @@ export class FingerprintCollector {
       return; // Não executar no servidor Node.js
     }
 
+    // Inicializar contadores do localStorage se estivermos no browser
+    if (typeof localStorage !== "undefined") {
+      try {
+        if (!localStorage.getItem("sessionStart")) {
+          localStorage.setItem("sessionStart", Date.now().toString());
+        }
+        
+        this.behaviorData.mouseMovements = parseInt(localStorage.getItem("mouseMovements") || "0");
+        this.behaviorData.keystrokes = parseInt(localStorage.getItem("keystrokes") || "0");
+        this.behaviorData.scrollEvents = parseInt(localStorage.getItem("scrollEvents") || "0");
+        this.behaviorData.clickEvents = parseInt(localStorage.getItem("clickEvents") || "0");
+        this.behaviorData.focusEvents = parseInt(localStorage.getItem("focusEvents") || "0");
+      } catch (e) {
+        // Fallback se localStorage não funcionar
+      }
+    }
+
     // Mouse movements
     document.addEventListener("mousemove", () => {
       this.behaviorData.mouseMovements!++;
+      this.saveToLocalStorage("mouseMovements", this.behaviorData.mouseMovements!);
     });
 
     // Keystrokes
     document.addEventListener("keydown", () => {
       this.behaviorData.keystrokes!++;
+      this.saveToLocalStorage("keystrokes", this.behaviorData.keystrokes!);
     });
 
     // Scroll events
     document.addEventListener("scroll", () => {
       this.behaviorData.scrollEvents!++;
+      this.saveToLocalStorage("scrollEvents", this.behaviorData.scrollEvents!);
     });
 
     // Click events
     document.addEventListener("click", () => {
       this.behaviorData.clickEvents!++;
+      this.saveToLocalStorage("clickEvents", this.behaviorData.clickEvents!);
     });
 
     // Focus events
     document.addEventListener("focus", () => {
       this.behaviorData.focusEvents!++;
+      this.saveToLocalStorage("focusEvents", this.behaviorData.focusEvents!);
     });
 
     // Page load time
@@ -112,6 +168,16 @@ export class FingerprintCollector {
 
     // Referrer
     this.behaviorData.referrer = document.referrer;
+  }
+
+  private saveToLocalStorage(key: string, value: number): void {
+    if (typeof localStorage !== "undefined") {
+      try {
+        localStorage.setItem(key, value.toString());
+      } catch (e) {
+        // Falha silenciosa se localStorage não funcionar
+      }
+    }
   }
 
   public collectDeviceFingerprint(): DeviceFingerprint {
@@ -161,7 +227,20 @@ export class FingerprintCollector {
   }
 
   public collectBehaviorFingerprint(): BehaviorFingerprint {
-    this.behaviorData.sessionDuration = Date.now() - this.startTime;
+    // Calcular duração da sessão usando localStorage se disponível
+    let sessionStart = this.startTime;
+    if (typeof localStorage !== "undefined") {
+      try {
+        const storedStart = localStorage.getItem("sessionStart");
+        if (storedStart) {
+          sessionStart = parseInt(storedStart);
+        }
+      } catch (e) {
+        // Usar fallback
+      }
+    }
+
+    this.behaviorData.sessionDuration = Date.now() - sessionStart;
     this.behaviorData.timestamp = Date.now();
 
     return this.behaviorData as BehaviorFingerprint;
