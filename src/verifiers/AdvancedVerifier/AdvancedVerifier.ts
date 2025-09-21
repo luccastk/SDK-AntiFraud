@@ -105,15 +105,49 @@ export default class AdvancedVerifier {
   public middlewareAdvancedVerify(endpoint: string, userId?: string) {
     return async (req: Request, res: any, next: NextFunction) => {
       try {
-        // Criar novo collector para cada requisição para garantir dados únicos
-        const uniqueCollector = new FingerprintCollector();
-        const fingerprint = uniqueCollector.collectCompleteFingerprint(userId);
-
-        // Adiciona o IP da requisição
-        fingerprint.network.ip = req.ip || req.socket.remoteAddress || "";
+        // Criar fingerprint básico apenas com dados do servidor
+        const basicFingerprint = {
+          device: {
+            userAgent: req.headers['user-agent'] || 'Unknown',
+            language: req.headers['accept-language']?.split(',')[0] || 'en-US',
+            platform: 'Server',
+            screenResolution: '0x0',
+            timezone: 'UTC',
+            colorDepth: 0,
+            pixelRatio: 1,
+            hardwareConcurrency: 0,
+            maxTouchPoints: 0,
+            cookieEnabled: false,
+            doNotTrack: null,
+            plugins: [],
+            fonts: [],
+            canvas: '',
+            webgl: ''
+          },
+          behavior: {
+            mouseMovements: 0,
+            keystrokes: 0,
+            scrollEvents: 0,
+            clickEvents: 0,
+            focusEvents: 0,
+            sessionDuration: 0,
+            pageLoadTime: 0,
+            referrer: req.headers['referer'] || '',
+            timestamp: Date.now()
+          },
+          network: {
+            ip: req.ip || req.socket.remoteAddress || '',
+            connectionType: 'unknown',
+            effectiveType: 'unknown',
+            downlink: 0,
+            rtt: 0
+          },
+          sessionId: `session_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
+          userId
+        };
 
         const payload: VerificationRequest = {
-          fingerprint,
+          fingerprint: basicFingerprint,
           endpoint,
           userId,
         };
@@ -134,7 +168,7 @@ export default class AdvancedVerifier {
           status: "REVIEW",
           riskScore: 100,
           reasons: ["Erro na verificação"],
-          sessionId: "",
+          sessionId: `session_${Date.now()}_error`,
           timestamp: Date.now(),
         };
         // Sempre continua - usuário decide no controller

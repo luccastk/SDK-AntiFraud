@@ -1,6 +1,6 @@
 {
   "name": "sdk-antifraud-core",
-  "version": "1.0.9",
+  "version": "1.1.0",
   "description": "🛡️ SDK AntiFraud - Advanced fraud detection SDK with device fingerprinting and risk analysis",
   "main": "dist/index.js",
   "type": "module",
